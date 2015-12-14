@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+  body {
+    font: 24px sans-serif;
+    text-align: center;
+  }
+
+  body > div {
+    display: inline-block;
+    width: 400px;
+    vertical-align: top;
+  }
+
+  strong {
+    display: block;
+  }
+
+</style>
+<body>
+  <div>
+    <strong>SVG</strong>
+    <div class="svg"></div>
+  </div>
+  <div>
+    <strong>GIF</strong>
+    <div class="gif"></div>
+  </div>
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.10/d3.min.js"></script>
+<script src="//gabelerner.github.io/canvg/canvg.js"></script>
+<script src="gif.js"></script>
+<script>
+
+var margin = {top: 20, right: 5, bottom: 30, left: 60},
+    width = 400 - margin.left - margin.right,
+    height = 320 - margin.top - margin.bottom,
+    frames = 40,
+    duration = 2000;
+
+// Standard scales and axes
+var x = d3.time.scale()
+    .range([0, width]);
+
+var y = d3.scale.linear()
+    .range([height,0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .tickSize(-height)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .tickSize(-width)
+    .orient("left");
+
+var line = d3.svg.line()
+    .x(function(d){ return x(d.date); })
+    .y(function(d){ return y(d.close); });
+
+// Canvas to send canvg to
+var canvas = d3.select(".gif").append("canvas")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom);
+
+// SVG
+var outer = d3.select(".svg").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom);
+
+// Explicit background color, won't inherit page backgroudn
+outer.append("rect")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .attr({
+      stroke: "none",
+      fill: "#fff"
+    });
+
+// Margin convention
+var svg = outer.append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+d3.csv("sp-500.csv", function(error, data) {
+  if (error) throw error;
+
+  data.forEach(function(d){
+    d.date = new Date(d.date);
+    d.close = +d.close;
+  });
+
+  x.domain(d3.extent(data,function(d){ return d.date; }));
+  y.domain(d3.extent(data,function(d){ return d.close; }));
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis);
+
+  // Set relevant attrs directly instead of via CSS
+  d3.selectAll("path").remove();
+
+  d3.selectAll("line")
+      .attr({
+        fill: "none",
+        stroke: "#e0e0e0",
+        "stroke-width": 0.5
+      });
+
+  d3.selectAll("text")
+      .attr({
+        fill: "#000",
+        "font-family": "sans-serif",
+        "font-size": "12px"
+      });
+
+  var path = svg.append("path")
+      .attr("class","price")
+      .attr({
+        stroke: "#e51133",
+        fill: "none"
+      })
+      .attr("d",line(data));
+
+  var totalLength = path.node().getTotalLength();
+
+  var gif = new GIF({
+    workers: 3,
+    quality: 1,
+    repeat: 0
+  });
+
+  // Update SVG per frame, render to canvas, add to gif stack
+  d3.range(frames).forEach(function(f){
+
+    drawFrame(f * duration / (frames - 1));
+
+    canvg(canvas.node(),d3.select(".svg").node().innerHTML,{ ignoreMouse: true, ignoreAnimation: true });
+
+    gif.addFrame(canvas.node(), {
+      delay: duration / frames,
+      copy: true
+    });
+
+  });
+
+  // Discard canvas
+  canvas.remove();
+
+  gif.on("progress",function(p){
+
+    drawFrame(p * duration);
+
+    d3.select(".gif").text(d3.format("%")(p) + " rendered");
+
+  });
+
+  gif.on("finished",function(blob){
+
+    d3.select(".gif")
+        .text("")
+        .append("img")
+          .attr("src",URL.createObjectURL(blob));
+
+    d3.timer(drawFrame);
+
+  });
+
+  gif.render();
+
+  function drawFrame(t) {
+
+    var length = t % duration / duration * totalLength;
+
+    path.attr("stroke-dasharray",length + " " + totalLength);
+
+  }
+
+});
+
+</script>
