@@ -48,8 +48,6 @@ As [outlined by Lena Groeger](http://lenagroeger.s3.amazonaws.com/talks/nicar-20
 * Requires Photoshop license
 * Requires comfort with Photoshop, especially for cropping or tweaking frames
 
-http://lenagroeger.s3.amazonaws.com/talks/nicar-2015/loops-nicar/gif-tutorials/screengif.html
-
 ### LICEcap
 
 You can create a gif using [LICEcap](https://github.com/lepht/licecap) by taking a screen recording of your browser and saving it directly as a gif.
@@ -83,17 +81,17 @@ To compile the frames into a gif, you can either use command line tools or do it
 
 * All code, not manual - higher barrier to entry
 * Only works with code that generates frames one at a time, not something declarative like `$.animate`, `d3.transition`, or a CSS animation
-* Only works with a `<canvas>`-based animation, not `<svg>` or anything else. That means no styling with CSS, no SVG-specific features, etc.
+* Only works with a canvas-based animation, not SVG or anything else. That means no styling with CSS, no SVG-specific features, etc.
 * No access to browser APIs or features that aren't supported by the `canvas` module.
 * Lots of image library dependencies
-* Requires [Node.js](https://nodejs.org/en/) and some comfort level with it
+* Requires [Node.js](https://nodejs.org/en/) and some comfort with it
 * Requires command-line tools and some comfort with them
 
 ### Web workers + canvas
 
 Demo: http://bl.ocks.org/veltman/03edaa335f93b5a9ee57
 
-The basic idea here is to write in-browser code similar to the "Node + canvas" approach above, where you update a `<canvas>` element frame-by-frame.  You combine the frames into a gif in the background using [gif.js](https://jnordberg.github.io/gif.js/) web workers.  This is relatively slow, but you get visual feedback and there are no dependencies besides the gif.js library.  You only need some JavaScript and a web browser.
+The basic idea here is to write in-browser code similar to the "Node + canvas" approach above, where you update a canvas element frame-by-frame.  You combine the frames into a gif in the background using [gif.js](https://jnordberg.github.io/gif.js/) web workers.  This is relatively slow, but you get visual feedback and there are no dependencies besides the gif.js library.  You only need some JavaScript and a web browser.
 
 TK FILL THIS IN MORE
 
@@ -132,13 +130,13 @@ TK FILL THIS IN MORE
 
 * You still need to execute the code in a browser and save the result manually; it's better for an internal tool than for any sort of automated pipeline.
 * Only works with code that generates frames one at a time, not something declarative like `$.animate`, `d3.transition`, or a CSS animation
-* Rendering is slower than the `<canvas>` version
+* Rendering is even slower than the `<canvas>` version
 * No 3D
 * Doesn't work in every browser
 
 ### PhantomJS
 
-One of the big downsides to the two in-browser approaches above is that you have to structure your code in a particular way.  It has to explicitly set the current frame based on how far along it is, like:
+One of the big downsides to the two web worker approaches above is that you have to structure your code in a particular way.  It has to explicitly set the current frame based on how far along it is, like:
 
 ```js
 
@@ -279,12 +277,13 @@ TK FILL THIS IN MORE
 
 #### Pros
 
-* Can use anything that works in a webkit browser
+* Can use anything that works in a vanilla webkit browser
 * Detailed control over size, start/end, and framerate
 
 #### Cons
 
 * Syncing things between your browser code and your PhantomJS script is pretty annoying and is hard to do without lots of exposed global variables; timing is especially tricky
+* Still need several steps to actually end up with a gif
 * PhantomJS, FFmpeg, gifsicle dependencies
 * PhantomJS gets weird about certain things like webfonts sometimes
 * Probably the slowest option
@@ -344,7 +343,7 @@ TK FILL THIS IN
 #### Pros
 
 * Can use pretty much anything that works in a browser
-* Can use declarative syntax for your animations (i.e. less math)
+* Can use declarative syntax for your animations (i.e. a lot less math)
 * Detailed control over size, start/end, and framerate
 
 #### Cons
