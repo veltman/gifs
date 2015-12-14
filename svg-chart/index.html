@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+  body {
+    font: 24px sans-serif;
+    text-align: center;
+  }
+
+  body > div {
+    display: inline-block;
+    width: 400px;
+    vertical-align: top;
+  }
+
+  strong {
+    display: block;
+  }
+
+</style>
+<style id="chart-style">
+
+  rect {
+    stroke: none;
+    fill: #fff;
+  }
+
+  line,
+  path {
+    fill: none;
+  }
+
+  text {
+    fill: black;
+    font: 12px sans-serif;
+  }
+
+  line {
+    stroke-width: 0.5px;
+    stroke: #e0e0e0;
+  }
+
+  .axis path {
+    display: none;
+  }
+
+  path.price {
+    stroke: #e51133;
+    fill: none;
+  }
+
+</style>
+<body>
+  <div>
+    <strong>SVG</strong>
+    <div class="svg"></div>
+  </div>
+  <div>
+    <strong>GIF</strong>
+    <div class="gif"></div>
+  </div>
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.10/d3.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.min.js"></script>
+<script src="gif.js"></script>
+<script>
+
+var margin = {top: 20, right: 5, bottom: 30, left: 60},
+    outerWidth = 400,
+    outerHeight = 320,
+    width = outerWidth - margin.left - margin.right,
+    height = outerHeight - margin.top - margin.bottom,
+    frames = 40,
+    duration = 2000;
+
+// Standard scales and axes
+var x = d3.time.scale()
+    .range([0, width]);
+
+var y = d3.scale.linear()
+    .range([height,0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .tickSize(-height)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .tickSize(-width)
+    .orient("left");
+
+var line = d3.svg.line()
+    .x(function(d){ return x(d.date); })
+    .y(function(d){ return y(d.close); });
+
+// SVG
+var outer = d3.select(".svg").append("svg")
+    .attr("width",outerWidth)
+    .attr("height",outerHeight);
+
+// Append stylesheet
+outer.append(function(){ return document.getElementById("chart-style"); });
+
+// Explicit background color, won't inherit page background
+outer.append("rect")
+    .attr("width",outerWidth)
+    .attr("height",outerHeight);
+
+// Margin convention
+var svg = outer.append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+d3.csv("sp-500.csv", function(error, data) {
+  if (error) throw error;
+
+  data.forEach(function(d){
+    d.date = new Date(d.date);
+    d.close = +d.close;
+  });
+
+  x.domain(d3.extent(data,function(d){ return d.date; }));
+  y.domain(d3.extent(data,function(d){ return d.close; }));
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis);
+
+  var path = svg.append("path")
+      .attr("class","price")
+      .attr("d",line(data));
+
+  var totalLength = path.node().getTotalLength();
+
+  var gif = new GIF({
+    workers: 3,
+    quality: 1,
+    repeat: 0
+  });
+
+  gif.on("progress",function(p){
+
+    drawFrame(p * duration);
+
+    d3.select(".gif").text(d3.format("%")(p) + " rendered");
+
+  });
+
+  gif.on("finished",function(blob){
+
+    d3.select(".gif")
+        .text("")
+        .append("img")
+          .attr("src",URL.createObjectURL(blob));
+
+    d3.timer(drawFrame);
+
+  });
+
+  // Sequential queue to ensure frames are added in order
+  // Probably not necessary but onload behavior is a little unpredictable
+  var q = queue(1);
+
+  // Queue up frames to add to gif stack
+  d3.range(frames).forEach(function(f){
+    q.defer(addFrame,f * duration / (frames - 1));
+  });
+
+  // Once all frames are added
+  q.awaitAll(function(){
+
+    // Show SVG as progress bar
+    outer.style("display","block");
+
+    // Start web workers
+    gif.render();
+
+  });
+
+  // Add a frame for time t
+  function addFrame(t,cb) {
+
+    // Update SVG
+    drawFrame(t);
+
+    // Create a blob URL from SVG
+    var img = new Image(),
+        serialized = new XMLSerializer().serializeToString(outer.node()),
+        svg = new Blob([serialized], {type: "image/svg+xml;charset=utf-8"}),
+        url = URL.createObjectURL(svg);
+
+    // Onload, callback to move on to next frame
+    img.onload = function(){
+
+      gif.addFrame(img, {
+        delay: duration / frames,
+        copy: true
+      });
+
+      cb(null,t);
+
+
+    };
+
+    img.src = url;
+
+  }
+
+  function drawFrame(t) {
+
+    // Need to catch 0% and 100%
+    // Surely a smarter way to do this
+    if (t > duration) {
+      t = t % duration;
+    }
+
+    var length = totalLength * t / duration;
+
+    path.attr("stroke-dasharray",length + " " + totalLength);
+
+  }
+
+});
+
+</script>

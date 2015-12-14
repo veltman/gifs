@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+  body {
+    font: 24px sans-serif;
+    text-align: center;
+  }
+
+  body > div {
+    display: inline-block;
+    width: 400px;
+    vertical-align: top;
+  }
+
+  strong {
+    display: block;
+  }
+
+</style>
+<style id="globe-style">
+
+  path {
+    fill: none;
+    stroke: #222;
+    stroke-width: 0.5px;
+  }
+
+  rect {
+    stroke: none;
+    fill: #fff;
+  }
+
+  path.water {
+    fill: #23b4d8;
+  }
+
+</style>
+<body>
+  <div>
+    <strong>SVG</strong>
+    <div class="svg"></div>
+  </div>
+  <div>
+    <strong>GIF</strong>
+    <div class="gif"></div>
+  </div>
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.10/d3.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.min.js"></script>
+<script src="gif.js"></script>
+<script>
+
+var width = 400,
+    height = 400,
+    frames = 60,
+    duration = 1800;
+
+// Orthographic projection
+var projection = d3.geo.orthographic()
+    .scale(195)
+    .translate([width / 2, height / 2])
+    .clipAngle(90)
+    .precision(.1);
+
+var path = d3.geo.path()
+    .projection(projection);
+
+// SVG
+var svg = d3.select(".svg").append("svg")
+    .attr("width",outerWidth)
+    .attr("height",outerHeight);
+
+// Append stylesheet
+svg.append(function(){ return document.getElementById("globe-style"); });
+
+// Explicit background color, won't inherit page background
+svg.append("rect")
+    .attr("width",outerWidth)
+    .attr("height",outerHeight);
+
+// Some globey colors
+var colors = d3.scale.ordinal()
+    .range(["#6eb8ac", "#c3d34e", "#cd8b4e", "#b9af5e", "#c96e98", "#ac92be", "#8fcd5e"]);
+
+d3.json("/mbostock/raw/4090846/world-110m.json",function(err,world){
+
+  var land = topojson.feature(world,world.objects.land),
+      neighbors = topojson.neighbors(world.objects.countries.geometries),
+      countries =  topojson.feature(world,world.objects.countries).features,
+      mesh = topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; });
+
+      // Coloring algo from http://bl.ocks.org/1wheel/5899035
+      countries.forEach(function(d,i){
+        d.properties.color = colors(d.color = d3.max(neighbors[i], function(n) { return countries[n].color; }) + 1 | 0);
+      });
+
+  // Water background
+  svg.append("path")
+      .datum({type: "Sphere"})
+      .attr("class","water");
+
+  // Individual countries
+  svg.selectAll(".country")
+      .data(countries)
+      .enter()
+      .append("path")
+        .attr("class","country")
+        .style("fill",function(d){
+          return d.properties.color;
+        });
+
+  // Land for outlining continents
+  svg.append("path")
+      .datum(land);
+
+  var gif = new GIF({
+    workers: 3,
+    quality: 3,
+    repeat: 0
+  });
+
+  gif.on("progress",function(p){
+
+    drawFrame(p * duration);
+
+    d3.select(".gif").text(d3.format("%")(p) + " rendered");
+
+  });
+
+  gif.on("finished",function(blob){
+
+    d3.select(".gif")
+        .text("")
+        .append("img")
+          .attr("src",URL.createObjectURL(blob));
+
+    // Start SVG looping
+    // d3.timer continuity is a bit much
+
+    var t = 0;
+
+    setInterval(function(){
+
+      t = (t + duration/frames) % duration;
+      drawFrame(t);
+
+    },duration/frames);
+
+  });
+
+  // Sequential queue to ensure frames are added in order
+  // Probably not necessary but onload behavior is a little unpredictable
+  var q = queue(1);
+
+  // Queue up frames to add to gif stack
+  d3.range(frames).forEach(function(f){
+    q.defer(addFrame,f * duration / (frames - 1));
+  });
+
+  // Once all frames are added
+  q.awaitAll(function(){
+
+    // Show SVG as progress bar
+    svg.style("display","block");
+
+    // Start web workers
+    gif.render();
+
+  });
+
+  // Add a frame for time t
+  function addFrame(t,cb) {
+
+    // Update SVG
+    drawFrame(t);
+
+    // Create a blob URL from SVG
+    var img = new Image(),
+        serialized = new XMLSerializer().serializeToString(svg.node()),
+        blob = new Blob([serialized], {type: "image/svg+xml;charset=utf-8"}),
+        url = URL.createObjectURL(blob);
+
+    // Onload, callback to move on to next frame
+    img.onload = function(){
+
+      gif.addFrame(img, {
+        delay: duration / frames,
+        copy: true
+      });
+
+      cb(null,t);
+
+    };
+
+    img.src = url;
+
+  }
+
+  function drawFrame(t) {
+
+    projection.rotate([360 * (t % duration) / duration]);
+
+    svg.selectAll("path")
+        .attr("d",path);
+
+  }
+
+});
+
+</script>

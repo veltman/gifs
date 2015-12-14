@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 24px sans-serif;
+  text-align: center;
+}
+
+body > div {
+  display: inline-block;
+  width: 400px;
+  vertical-align: top;
+}
+
+strong {
+  display: block;
+}
+
+</style>
+<body>
+<div>
+  <strong>CANVAS</strong>
+  <div class="canvas"></div>
+</div>
+<div>
+  <strong>GIF</strong>
+  <div class="gif"></div>
+</div>
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.10/d3.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"></script>
+<script src="gif.js"></script>
+<script type="text/javascript">
+
+var width = 400,
+    height = 400,
+    frames = 60,
+    duration = 1800;
+
+var canvas = d3.select(".canvas").append("canvas")
+      .attr("width",width)
+      .attr("height",height);
+
+var ctx = canvas.node().getContext("2d");
+
+// Orthographic projection
+var projection = d3.geo.orthographic()
+    .scale(195)
+    .translate([width / 2, height / 2])
+    .clipAngle(90)
+    .precision(.1);
+
+var path = d3.geo.path()
+    .projection(projection)
+    .context(ctx);
+
+// Some globey colors
+var colors = d3.scale.ordinal()
+    .range(["#6eb8ac", "#c3d34e", "#cd8b4e", "#b9af5e", "#c96e98", "#ac92be", "#8fcd5e"]);
+
+d3.json("/mbostock/raw/4090846/world-110m.json",function(err,world){
+
+  var land = topojson.feature(world,world.objects.land),
+      neighbors = topojson.neighbors(world.objects.countries.geometries),
+      countries =  topojson.feature(world,world.objects.countries).features,
+      mesh = topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; });
+
+      // Coloring algo from http://bl.ocks.org/1wheel/5899035
+      countries.forEach(function(d,i){
+        d.properties.color = colors(d.color = d3.max(neighbors[i], function(n) { return countries[n].color; }) + 1 | 0);
+      });
+
+  // Create gif
+  var gif = new GIF({
+    workers: 2,
+    quality: 1,
+    repeat: 0
+  });
+
+  d3.range(frames).forEach(function(f){
+
+    drawFrame(f * duration / frames);
+
+    gif.addFrame(canvas.node(), {
+      delay: duration / frames,
+      copy: true
+    });
+
+  });
+
+  // Reset to zero
+  drawFrame(0);
+
+  gif.on("progress",function(p){
+
+    // Update canvas with progress
+    drawFrame(p * duration);
+
+    d3.select(".gif").text(d3.format("%")(p) + " rendered");
+
+  });
+
+  gif.on("finished",function(blob){
+
+    d3.select(".gif")
+        .text("")
+        .append("img")
+          .attr("src",URL.createObjectURL(blob));
+
+    // Start canvas looping
+    // d3.timer continuity is a bit much
+
+    var t = 0;
+
+    setInterval(function(){
+
+      t = (t + duration/frames) % duration;
+      drawFrame(t);
+
+    },duration/frames);
+
+  });
+
+  gif.render();
+
+  function drawFrame(t) {
+
+    // Update rotation
+    projection.rotate([360 * t / duration]);
+
+    ctx.strokeStyle = "#222";
+    ctx.lineWidth = 0.5;
+
+    // Instead of clearRect to avoid weird edges
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0,0,width,height);
+
+    // Draw water
+    ctx.fillStyle = "#23b4d8";
+    ctx.beginPath();
+    path({type: "Sphere"});
+    ctx.fill();
+
+    // Draw countries
+    countries.forEach(function(country){
+      ctx.fillStyle = country.properties.color;
+      ctx.beginPath();
+      path(country);
+      ctx.fill();
+    });
+
+    // Draw boundaries
+    ctx.beginPath();
+    path(mesh);
+    ctx.stroke();
+
+    // For outer continent edges
+    ctx.beginPath();
+    path(land);
+    ctx.stroke();
+
+
+  }
+
+});
+
+</script>

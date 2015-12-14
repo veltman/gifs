@@ -1,0 +1,1 @@
+Testing [gif.js](https://jnordberg.github.io/gif.js/) in-browser gif rendering with web workers.

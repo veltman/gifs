@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 24px sans-serif;
+  text-align: center;
+}
+
+body > div {
+  display: inline-block;
+  width: 280px;
+  vertical-align: top;
+}
+
+strong {
+  display: block;
+}
+
+</style>
+<body>
+<div>
+  <strong>CANVAS</strong>
+  <div class="canvas"></div>
+</div>
+<div>
+  <strong>GIF</strong>
+  <div class="gif"></div>
+</div>
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.10/d3.min.js"></script>
+<script src="gif.js"></script>
+<script type="text/javascript">
+
+var width = 280,
+    height = 450,
+    frames = 36,
+    duration = 1500;
+
+var canvas = d3.select(".canvas").append("canvas")
+    .attr("width",width)
+    .attr("height",height);
+
+var ctx = canvas.node().getContext("2d");
+
+// NJ state plane
+var projection = d3.geo.transverseMercator()
+    .rotate([74 + 30 / 60, -38 - 50 / 60])
+    .scale(9538.884870110143)
+    .translate([169.3815781034436, 431.50031210578817]);
+
+var path = d3.geo.path()
+    .projection(projection);
+
+ctx.strokeStyle = "#f0f";
+ctx.fillStyle = "#fff";
+ctx.lineWidth = 3;
+
+d3.json("nj.geo.json",function(err,nj){
+
+  // Total pixel length of the path
+  var totalLength = getLength(nj);
+
+  // Create gif
+  var gif = new GIF({
+    workers: 2,
+    quality: 1,
+    repeat: 0
+  });
+
+  path.context(ctx);
+
+  // Include a zero frame for now
+  d3.range(frames + 1).forEach(function(f){
+
+    drawFrame(f * duration / frames,true);
+
+    gif.addFrame(canvas.node(), {
+      delay: duration / frames,
+      copy: true
+    });
+
+  });
+
+  drawFrame(0);
+
+  gif.on("progress",function(p){
+
+    drawFrame(p * duration);
+
+    d3.select(".gif").text(d3.format("%")(p) + " rendered");
+
+  });
+
+  gif.on("finished",function(blob){
+
+    d3.select(".gif")
+        .text("")
+        .append("img")
+          .attr("src",URL.createObjectURL(blob));
+
+    d3.timer(drawFrame);
+
+  });
+
+  gif.render();
+
+  function drawFrame(t,manual) {
+
+    // catch both 0 and 100% for gif, but mod for timer
+    if (!manual) {
+      t = t % duration;
+    }
+
+    // Compute path length
+    var length = totalLength * t / duration;
+
+    // Instead of clearRect to avoid weird edges
+    ctx.fillRect(0,0,width,height);
+
+    // Line dash to draw partial path
+    // Have to make the gap (2nd arg) extra-long
+    // or else Firefox freaks out
+    ctx.setLineDash([length,totalLength]);
+
+    ctx.beginPath();
+
+    // Draw the path
+    path(nj);
+
+    ctx.stroke();
+
+  }
+
+});
+
+// Get path str length with a dummy SVG
+function getLength(geo) {
+
+  var svg = d3.select("body").append("svg")
+        .attr("width",width)
+        .attr("height",height);
+
+  var length = svg.append("path")
+      .attr("d",path(geo))
+      .node()
+      .getTotalLength();
+
+  svg.remove();
+
+  return length;
+
+}
+
+</script>

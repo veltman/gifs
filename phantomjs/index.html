@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+rect {
+    stroke: none;
+    fill: #e51133;
+}
+
+</style>
+<body>
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.10/d3.min.js"></script>
+<script>
+
+  var width = 600,
+      height = 600;
+
+  var svg = d3.select("body").append("svg")
+      .attr("width",width)
+      .attr("height",height);
+
+  var y = d3.scale.ordinal()
+      .domain(d3.range(6))
+      .rangeRoundBands([0,height],0.1);
+
+  var bars = svg.selectAll("rect")
+      .data(y.domain())
+      .enter()
+      .append("rect")
+      .attr("y",y)
+      .attr("width",0)
+      .attr("height",y.rangeBand());
+
+  function ready() {
+
+    bars.transition()
+        .duration(2000)
+        .attr("width",function(d){
+          return width / (d+1);
+        });
+
+  }
+
+</script>
