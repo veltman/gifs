@@ -176,9 +176,10 @@ d3.json("/mbostock/raw/4090846/world-110m.json",function(err,world){
     drawFrame(t);
 
     // Create a blob URL from SVG
+    // including "charset=utf-8" in the blob type breaks in Safari
     var img = new Image(),
         serialized = new XMLSerializer().serializeToString(svg.node()),
-        blob = new Blob([serialized], {type: "image/svg+xml;charset=utf-8"}),
+        blob = new Blob([serialized], {type: "image/svg+xml"}),
         url = URL.createObjectURL(blob);
 
     // Onload, callback to move on to next frame
