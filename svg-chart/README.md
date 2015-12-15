@@ -1,4 +1,4 @@
-Testing in-browser gif generation from an SVG with [gif.js](https://github.com/jnordberg/gif.js/).  Chrome and Firefox only, though it seems like it oughta work in Safari?
+Testing in-browser gif generation from an SVG with [gif.js](https://github.com/jnordberg/gif.js/).  Works in recent Chrome/Safari/Firefox.
 
 Process:
 

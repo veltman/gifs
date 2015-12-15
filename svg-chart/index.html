@@ -188,9 +188,10 @@ d3.csv("sp-500.csv", function(error, data) {
     drawFrame(t);
 
     // Create a blob URL from SVG
+    // including "charset=utf-8" in the blob type breaks in Safari
     var img = new Image(),
         serialized = new XMLSerializer().serializeToString(outer.node()),
-        svg = new Blob([serialized], {type: "image/svg+xml;charset=utf-8"}),
+        svg = new Blob([serialized], {type: "image/svg+xml"}),
         url = URL.createObjectURL(svg);
 
     // Onload, callback to move on to next frame
