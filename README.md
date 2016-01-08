@@ -351,7 +351,17 @@ TK FILL THIS IN
 * Still doesn't work with things like d3 axes, which have very specific and complicated behavior around transitions
 * Seems like an even more convoluted hack!
 
+### Automate QuickTime screen recording
 
+Same as the "Quicktime + FFmpeg" or "Quicktime + Photoshop" approaches, but automate the actual screen recording.  Automatically get the screen x, y, width, and height of the `<body>` element in an open browser and capture a screen recording of it.  You'd still need a way to specify the duration and start it at the right time.
+
+#### Pros
+
+* Slightly more automated
+
+#### Cons
+
+* Completely insane
 
 ## Notes
 

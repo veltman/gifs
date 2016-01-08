@@ -1,10 +1,5 @@
 Testing in-browser gif generation from an SVG with [gif.js](https://github.com/jnordberg/gif.js/).  Works in recent Chrome/Safari/Firefox.
 
-Process:
+Data: [UN Population Division](http://esa.un.org/unpd/wpp/Download/Standard/Population/)
 
-1. Create a standard SVG line chart.
-2. Step through in-between frames of the line chart: for each one, update the SVG, render to an image, add the image element to a stack of gif frames.
-3. Render frames together in the background using gif.js web workers.
-4. When rendering's complete, add the blob URL as an image and start the SVG on an infinite loop with `d3.timer` (gratuitous).
-
-See also: [Gif Globe](http://bl.ocks.org/veltman/03edaa335f93b5a9ee57), [Gif New Jersey](http://bl.ocks.org/veltman/b100d04bda697f95f246)
+See also: [Gif SVG chart](http://bl.ocks.org/veltman/1071413ad6b5b542a1a3), [Gif Globe](http://bl.ocks.org/veltman/03edaa335f93b5a9ee57), [Gif New Jersey](http://bl.ocks.org/veltman/b100d04bda697f95f246)
