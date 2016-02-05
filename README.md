@@ -271,7 +271,11 @@ And save that output as an mp4 using FFmpeg:
 $ phantomjs render.js | ffmpeg -y -c:v png -f image2pipe -r 25 -t 2  -i - -an -c:v libx264 -pix_fmt yuv420p -movflags +faststart movie.mp4
 ```
 
-Then you've still got to convert your movie into a gif.
+Then you've still got to convert your movie into a gif, but you're most of the way there.
+
+The main problem with this approach in my experience is that the `page.render()` call is synchronous and takes a non-trivial amount of time to complete, so you end up dropping a few frames, because it takes a little bit longer than the actual interval to catch each frame, and the longer the animation is, the more out of sync the end results will be.
+
+As a compromise, you could instead use PhantomJS to step through the frames by calling a stepper function repeatedly and rendering that way.
 
 TK FILL THIS IN MORE
 
@@ -291,8 +295,9 @@ TK FILL THIS IN MORE
 
 ### The next frontier: hacking d3 transitions
 
-As noted in the "PhantomJS" section above, there's a frustrating tradeoff between the sort of animation code you might naturally write and the way you have to write it to save out a gif.  Wouldn't it be nice if you could still make use of abstractions like `d3.transition` but also say "while you're doing all that transitioning, stop every few milliseconds and save a frame for a gif"?
+Demo: https://bl.ocks.org/veltman/23460413ea085c024bf8
 
+As noted in the "PhantomJS" section above, there's a frustrating tradeoff between the sort of animation code you might naturally write and the way you have to write it to save out a gif.  Wouldn't it be nice if you could still make use of abstractions like `d3.transition` but also say "while you're doing all that transitioning, stop every few milliseconds and save a frame for a gif"?
 
 ```js
 
@@ -353,7 +358,7 @@ TK FILL THIS IN
 
 ### Automate QuickTime screen recording
 
-Same as the "Quicktime + FFmpeg" or "Quicktime + Photoshop" approaches, but automate the actual screen recording.  Automatically get the screen x, y, width, and height of the `<body>` element in an open browser and capture a screen recording of it.  You'd still need a way to specify the duration and start it at the right time.
+Same as the "Quicktime + FFmpeg" or "Quicktime + Photoshop" approaches, but automate the actual screen recording.  Automatically get the screen x, y, width, and height of the `<body>` element in an open browser and capture a screen recording of it.  You'd still need a way to specify the duration and start it at the right time.  This could probably be done with AppleScript but I wouldn't wish that task on my worst enemy.
 
 #### Pros
 

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+  body {
+    text-align: center;
+    font: 16px sans-serif;
+  }
+
+  button {
+    margin: 0 0.5em;
+  }
+
+  circle {
+    stroke: #000;
+    stroke-width: 1.5px;
+  }
+
+</style>
+<body>
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.14/d3.min.js"></script>
+<script src="d3-record.js"></script>
+<script>
+
+var margin = {top: 100, right: 100, bottom: 100, left: 100},
+    width = 960 - margin.left - margin.right,
+    height = 440 - margin.top - margin.bottom;
+
+var x = d3.scale.ordinal()
+    .domain(d3.range(5))
+    .rangePoints([0, width]);
+
+var y = x.copy()
+    .rangePoints([0, height]);
+
+var color = d3.scale.linear()
+    .domain(d3.extent(x.domain()))
+    .range(["hsl(297,50%,47%)", "hsl(81,78%,61%)"])
+    .interpolate(d3.interpolateHcl);
+
+var svg = d3.select("body").append("svg")
+  .attr("width", width + margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var dots = svg.selectAll("circle")
+  .data(x.domain())
+  .enter()
+  .append("circle")
+    .attr("r",20)
+    .attr("cx",0)
+    .attr("cy",y)
+    .style("fill",color);
+
+// Declare a normal transition
+dots.transition()
+  .duration(2500)
+  .delay(function(d){
+    return d * 100;
+  })
+  .attr("cx",x)
+  .transition()
+    .attr("r",40)
+    .filter(function(d){
+      return d % 2;
+    })
+    .transition()
+      .style("opacity",0);
+
+// "Record" the transition into a function that can jump to any time
+// `true` means it expects an absolute time in ms
+var jumpToTime = dots.record(true);
+
+d3.select("body").append("div")
+  .text("Jump to: ")
+  .selectAll("button")
+  .data(d3.range(0,8500,1000))
+  .enter()
+  .append("button")
+    .text(function(d){
+      return Math.round(d/1000) + " sec";
+    })
+    .on("click",jumpToTime);
+
+</script>
