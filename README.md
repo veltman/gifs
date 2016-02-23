@@ -1,6 +1,6 @@
 # Animation Tests
 
-Miscellaneous experiments with automatically rendering gifs from data-driven JavaScript animations.
+Miscellaneous experiments with automatically rendering gifs and videos from data-driven JavaScript animations.
 
 ## Why?
 
@@ -13,6 +13,8 @@ The current state-of-the-art for rendering a gif from your in-browser animation 
 ## How?
 
 Here's an overview of some different techniques for creating a gif of a cool JavaScript animation you wrote, with pros and cons of each.
+
+
 
 ### QuickTime + FFmpeg
 
@@ -384,6 +386,7 @@ Same as the "Quicktime + FFmpeg" or "Quicktime + Photoshop" approaches, but auto
 
 #### Cons
 
+* Mac-only
 * Completely insane
 
 ## Summary
@@ -410,4 +413,5 @@ What did I miss? Do you know a better way? [Get in touch](https://twitter.com/ve
 * [libgif-js](https://github.com/buzzfeed/libgif-js) - A gif manipulation library from BuzzFeed
 * [Datagifs](https://www.pinterest.com/jsvine/datagifs/) - A Pinterest board curated by Jeremy Singer-Vine
 * [The Power of Loops](https://www.youtube.com/watch?v=zd0YQAgu3dI) - Lena Groeger's 2015 OpenVis Conf talk on the narrative potential of loops
+* [CCapture.js](https://github.com/spite/ccapture.js/) - A wrapper library for capturing canvas-based animations in a browser or on a server.
 * [Disney's 12 Basic Principles of Animation](https://en.wikipedia.org/wiki/12_basic_principles_of_animation)
