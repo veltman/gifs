@@ -6,7 +6,7 @@ Miscellaneous experiments with automatically rendering gifs from data-driven Jav
 
 Interactive visualizations are cool, but sometimes a gif or a video tells the story pretty well by itself.  Gifs have the advantage of being easy to save, easy to share, and easy to view on pretty much any device.
 
-Even if you're going to publish a whole interactive shebang, odds are you'll want something like a gif for social sharing or for demonstrating particular aspects of the data.
+Even if you're going to publish a whole interactive whatever, odds are you'll want something like a gif for social sharing or for demonstrating particular aspects of the data.
 
 The current state-of-the-art for rendering a gif from your in-browser animation still mostly seems to be screen capture, which is easy but not very repeatable or configurable.  I was curious to explore other options.
 
@@ -37,7 +37,7 @@ As [outlined by Lena Groeger](http://lenagroeger.s3.amazonaws.com/talks/nicar-20
 
 #### Pros
 
-* Relativelystraightforward process
+* Relatively straightforward process
 * Works on any kind of animation
 * Can show user interactions (like a button being clicked)
 * Easy to tweak individual frames
@@ -47,6 +47,7 @@ As [outlined by Lena Groeger](http://lenagroeger.s3.amazonaws.com/talks/nicar-20
 * Manual recording means you have to redo the whole process for any change
 * Requires Photoshop license
 * Requires comfort with Photoshop, especially for cropping or tweaking frames
+* Rendering can be a drag with a long animation or a slow computer
 
 ### LICEcap
 
@@ -68,7 +69,7 @@ You can create a gif using [LICEcap](https://github.com/lepht/licecap) by taking
 
 ### Node + canvas
 
-As [described by Tom MacWright](https://github.com/tmcw/node-canvas-animation-example/), you can use the [canvas](https://www.npmjs.com/package/canvas) module to write JavaScript for an animation the same way you would for a browser and then run a node script to spit out all the frames as images.
+As [described by Tom MacWright](https://github.com/tmcw/node-canvas-animation-example/), you can use the [canvas](https://www.npmjs.com/package/canvas) module to write JavaScript for an animation the same way you would for a browser and then run a Node script to spit out all the frames as images.
 
 To compile the frames into a gif, you can either use command line tools or do it within your script using modules like [node-gif](https://github.com/pkrumins/node-gif) or [gifencoder](https://www.npmjs.com/package/gifencoder).
 
@@ -80,32 +81,31 @@ To compile the frames into a gif, you can either use command line tools or do it
 #### Cons
 
 * All code, not manual - higher barrier to entry
-* Only works with code that generates frames one at a time, not something declarative like `$.animate`, `d3.transition`, or a CSS animation
-* Only works with a canvas-based animation, not SVG or anything else. That means no styling with CSS, no SVG-specific features, etc.
-* No access to browser APIs or features that aren't supported by the `canvas` module.
+* Only works with code that generates frames from scratch one at a time, not something declarative like `$.animate`, `d3.transition`, or a CSS animation
+* Only works with a canvas-based animation. That means no styling with CSS, no SVG-specific features, etc. without extra stuff.
+* No access to browser APIs or features that aren't supported by the `canvas` module (e.g. `Path2D`).
 * Lots of image library dependencies
 * Requires [Node.js](https://nodejs.org/en/) and some comfort with it
-* Requires command-line tools and some comfort with them
+* Requires command line tools and some comfort with them
 
 ### Web workers + canvas
 
 Demo: http://bl.ocks.org/veltman/03edaa335f93b5a9ee57
 
-The basic idea here is to write in-browser code similar to the "Node + canvas" approach above, where you update a canvas element frame-by-frame.  You combine the frames into a gif in the background using [gif.js](https://jnordberg.github.io/gif.js/) web workers.  This is relatively slow, but you get visual feedback and there are no dependencies besides the gif.js library.  You only need some JavaScript and a web browser.
-
-TK FILL THIS IN MORE
+The basic idea here is to write in-browser code similar to the "Node + canvas" approach above, where you update a canvas element frame-by-frame.  You combine the frames into a gif in the background using [gif.js](https://jnordberg.github.io/gif.js/) web workers. This is relatively slow, but you get visual feedback and there are no dependencies besides the gif.js library.  You only need some JavaScript and a web browser.
 
 #### Pros
 
 * Code-based - easy to get a new gif when you tweak something in your code
+* Quick visual feedback
 * Detailed control over size, start/end, and framerate
 * Can access browser APIs and non-canvas features. For example, [this demo](http://bl.ocks.org/veltman/b100d04bda697f95f246) creates a dummy SVG to calculate the length of a path before adding it to a canvas.
-* No node scripts or command line required
-* I assume you could use this with WebGL to make a 3D gif?
+* No Node scripts or command line required
+* I assume you could use this with WebGL to make a 3D gif? That would be pretty cool.
 
 #### Cons
 
-* You still need to execute the code in a browser and save the result manually; it's better for an internal tool than for any sort of automated pipeline.
+* You still need to execute the code in a browser and save the result manually; it's better for an internal tool than for any sort of automated pipeline
 * Only works with code that generates frames one at a time, not something declarative like `$.animate`, `d3.transition`, or a CSS animation
 * The animation itself ultimately has to be done with a `<canvas>` element; you can't really manipulate things as DOM elements or style them with CSS without some insane hacks
 * Rendering takes a non-trivial amount of time, something like 5 or 10 seconds of render time per 1 second of animation
@@ -115,42 +115,38 @@ TK FILL THIS IN MORE
 
 Demo: http://bl.ocks.org/veltman/1071413ad6b5b542a1a3
 
-The basic idea here is similar to the "Web workers + canvas" approach above, but using an SVG instead.  With a little trickery involving a Blob and a dummy image element, you can render the contents of an SVG as an image and turn that into an animation frame.  Unlike the canvas approach, this gives you full access to SVG elements, attributes, and techniques.  It still kind of seems like black magic.
-
-TK FILL THIS IN MORE
+The basic idea here is similar to the "Web workers + canvas" approach above, but using an SVG instead.  With a little trickery involving a Blob and a dummy image element, you can render the contents of an SVG as an image and turn that into an animation frame.  Unlike the canvas approach, this gives you full access to SVG elements, attributes, and techniques.  The one catch is that you have to make sure any stylesheets that affect the SVG are copied into the SVG element itself.
 
 #### Pros
 
 * Code-based - easy to get a new gif when you tweak something in your code
 * Detailed control over size, start/end, and framerate
 * Can make full use of SVG goodness and style things with CSS
-* No node scripts or command line required
+* No Node scripts or command line required
 
 #### Cons
 
 * You still need to execute the code in a browser and save the result manually; it's better for an internal tool than for any sort of automated pipeline.
 * Only works with code that generates frames one at a time, not something declarative like `$.animate`, `d3.transition`, or a CSS animation
 * Rendering is even slower than the `<canvas>` version
-* No 3D
+* No 3D :(
 * Doesn't work in every browser
 
 ### PhantomJS
 
-One of the big downsides to the two web worker approaches above is that you have to structure your code in a particular way.  It has to explicitly set the current frame based on how far along it is, like:
+One of the big downsides to the all the frame-by-frame approaches above is that you have to structure your code in a particular way.  It has to explicitly set the current frame based on how far along it is, like:
 
 ```js
+// Do a bunch of initialization
 
-  // Do a bunch of initialization
+// Loop through the number of frames you want
+for (var i = 0; i < numFrames; i++) {
 
-  // Loop through the number of frames you want
-  for (var i = 0; i < numFrames; i++) {
+  bar.attr("width",maxBarWidth * i / numFrames);
 
-    bar.attr("width",maxBarWidth * i / numFrames);
+  // save the frame
 
-    // save the frame
-
-  }
-
+}
 ```
 
 For a simple animation this is feasible, but once it gets more complex it really sucks.  Your normal code is more likely to look like:
@@ -258,6 +254,7 @@ page.open(url,function(status) {
       return phantom.exit();
     }
 
+    // Get a new frame every ___ milliseconds
     setTimeout(getFrame,duration/numFrames);
 
   }
@@ -273,25 +270,45 @@ $ phantomjs render.js | ffmpeg -y -c:v png -f image2pipe -r 25 -t 2  -i - -an -c
 
 Then you've still got to convert your movie into a gif, but you're most of the way there.
 
-The main problem with this approach in my experience is that the `page.render()` call is synchronous and takes a non-trivial amount of time to complete, so you end up dropping a few frames, because it takes a little bit longer than the actual interval to catch each frame, and the longer the animation is, the more out of sync the end results will be.
+The main problem with this approach in my experience is that the `page.render()` call is synchronous and takes enough time to complete that you can't actually sample the animation at a consistent interval.  Each frame ends up being recorded later than it's supposed to be, and the longer the animation is, the more out of sync the end results will be.
 
-As a compromise, you could instead use PhantomJS to step through the frames by calling a stepper function repeatedly and rendering that way.
-
-TK FILL THIS IN MORE
+As a compromise, you could instead use PhantomJS to step through the frames by calling a stepper function repeatedly and rendering that way, but then we're basically back to where we were with the other approaches.
 
 #### Pros
 
-* Can use anything that works in a vanilla webkit browser
-* Detailed control over size, start/end, and framerate
+* Can use anything that works in a vanilla Webkit browser
 
 #### Cons
 
-* Syncing things between your browser code and your PhantomJS script is pretty annoying and is hard to do without lots of exposed global variables; timing is especially tricky
+* Syncing things between your browser code and your PhantomJS script is pretty annoying and is hard to do without lots of exposed global variables
+* Timing is unreliable
 * Still need several steps to actually end up with a gif
 * PhantomJS, FFmpeg, gifsicle dependencies
 * PhantomJS gets weird about certain things like webfonts sometimes
 * Probably the slowest option
 * Seems like a very convoluted hack!
+
+### Web workers + PhantomJS
+
+Demo: https://github.com/veltman/headless-gif
+
+One slight variation on the above is using the technique from one of the web worker examples to generate your entire gif, but encoding the result as a Base64 string so that you can grab it with PhantomJS.  This is a nice compromise because you can create/debug your gifmaker in a browser and then use PhantomJS to crank out gifs server-side, potentially supplying custom options for each.
+
+1. PhantomJS requests `gifmaker.html`.
+2. `gifmaker.html` creates a gif with web workers. When it's done, it encodes the result as a Base64 string and saves it as  a global variable.
+3. Meanwhile, PhantomJS is checking periodically to see whether the gif is done.  When it's done, it gets the content of that global variable.
+4. Decode the Base64 string into the `.gif`.
+
+#### Pros
+
+* Can automate server-side gifs but still use a lot of browser-specific goodness
+
+#### Cons
+
+* PhantomJS dependency
+* PhantomJS gets weird about certain things like webfonts sometimes
+* Only works with code that generates frames one at a time, not something declarative like `$.animate`, `d3.transition`, or a CSS animation
+* Still very convoluted (but in a good way maybe?)
 
 ### The next frontier: hacking d3 transitions
 
@@ -312,9 +329,10 @@ allTheBars.transition()
 
 ```
 
-Because these transitions are asynchronous and use `requestAnimationFrame`, they're hard to tap into, and they don't even step through the animation at totally predictable intervals.  If your browser got distracted by a bird, it might be a while before the next animation update happens.  So we need a way to tell d3: "Here's the transition I want; now you know all the math to calculate any arbitrary point along the way; let me have the remote and press play/pause/stop/fast-forward and jump to arbitrary time t."
+Because these transitions are asynchronous and use `requestAnimationFrame`, they're hard to tap into, and they don't even step through the animation at totally predictable intervals.  If your browser got distracted by a bird, it might be a while before the next frame happens and the animation will be jumpy.  So we need a way to tell d3: "Here's the transition I want; now you know all the math to calculate any arbitrary point along the way; let me have the remote and press play/pause/stop/fast-forward and jump to arbitrary time t."
 
 ```js
+
 // The normal transition
 var transition = allTheBars.transition()
   .duration(2000)
@@ -341,9 +359,9 @@ function saveAllTheFrames(ghost,numFrames) {
 }
 ```
 
-This seems mildly insane but let's give it a shot.
+This seems mildly insane but I gave it a shot. `d3-record.js` in the above demo is a proof-of-concept that works as long as you aren't modifying the same property multiple times in the same transition. It takes every element in a selection, and gets the easing function and list of tweens that d3 is storing internally. Then, when it's called, it loops through each element, and applies each tween with the appropriate adjusted time value.
 
-TK FILL THIS IN
+TODO: write some sort of `d3-animator` module that has the same API as `d3.transition` but is for synchronous updates instead of a background transition.
 
 #### Pros
 
@@ -358,7 +376,7 @@ TK FILL THIS IN
 
 ### Automate QuickTime screen recording
 
-Same as the "Quicktime + FFmpeg" or "Quicktime + Photoshop" approaches, but automate the actual screen recording.  Automatically get the screen x, y, width, and height of the `<body>` element in an open browser and capture a screen recording of it.  You'd still need a way to specify the duration and start it at the right time.  This could probably be done with AppleScript but I wouldn't wish that task on my worst enemy.
+Same as the "Quicktime + FFmpeg" or "Quicktime + Photoshop" approaches, but automate the actual screen recording.  Automatically get the screen x, y, width, and height of the `<body>` element in an open browser and capture a screen recording of it. You'd still need a way to specify the duration and start it at the right time. This could probably be done with AppleScript but I wouldn't wish that task on my worst enemy.
 
 #### Pros
 
@@ -368,9 +386,13 @@ Same as the "Quicktime + FFmpeg" or "Quicktime + Photoshop" approaches, but auto
 
 * Completely insane
 
-## Notes
+## Summary
 
-Gifs, especially long ones, have plenty of downsides. Files can get huge and performance can be sluggish. Color palette limitations can produce grainy gifs, especially if photos or gradients are involved.  Always gif responsibly.
+If you just want a quick demo of your animated thing to post on Twitter, screen recording probably makes more sense and you should ignore all of this. But these techniques can be pretty useful in other situations.  They're especially useful if you want to automatically produce a bunch of animated gifs or videos on a server.  And while the Web Workers approach is a little clunky for generating something live (it's slow, for one thing), the exciting part is that it enables [on-demand gifs], so you could let users generate totally custom gifs without any server-side code.
+
+Another nice thing about these techniques is that they can all be put towards videos, not just gifs.  Any mechanism that generates a stack of images, one frame at a time, can be put through `ffmpeg` or something similar to create a video instead, so you could potentially create nice data-driven animations in videos without mastering After Effects or whatever.
+
+What did I miss? Do you know a better way? [Get in touch](https://twitter.com/veltman)!
 
 ## Other resources
 
