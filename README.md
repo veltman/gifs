@@ -359,7 +359,7 @@ function saveAllTheFrames(ghost,numFrames) {
 }
 ```
 
-This seems mildly insane but I gave it a shot. `d3-record.js` in the above demo is a proof-of-concept that works as long as you aren't modifying the same property multiple times in the same transition. It takes every element in a selection, and gets the easing function and list of tweens that d3 is storing internally. Then, when it's called, it loops through each element, and applies each tween with the appropriate adjusted time value.
+This seems mildly insane but I gave it a shot. `d3-record.js` in [this demo](https://bl.ocks.org/veltman/23460413ea085c024bf8) is a proof of concept that mostly works. It takes every element in a selection, and gets the easing function and list of tweens that d3 is storing internally. Then, when it's called, it loops through each element, and applies each tween with the appropriate adjusted time value.
 
 TODO: write some sort of `d3-animator` module that has the same API as `d3.transition` but is for synchronous updates instead of a background transition.
 
@@ -371,7 +371,7 @@ TODO: write some sort of `d3-animator` module that has the same API as `d3.trans
 
 #### Cons
 
-* Still doesn't work with things like d3 axes, which have very specific and complicated behavior around transitions
+* Still doesn't work with things like d3 axes, which have specific behavior around transitions
 * Seems like an even more convoluted hack!
 
 ### Automate QuickTime screen recording
@@ -388,7 +388,11 @@ Same as the "Quicktime + FFmpeg" or "Quicktime + Photoshop" approaches, but auto
 
 ## Summary
 
-If you just want a quick demo of your animated thing to post on Twitter, screen recording probably makes more sense and you should ignore all of this. But these techniques can be pretty useful in other situations.  They're especially useful if you want to automatically produce a bunch of animated gifs or videos on a server.  And while the Web Workers approach is a little clunky for generating something live (it's slow, for one thing), the exciting part is that it enables [on-demand gifs], so you could let users generate totally custom gifs without any server-side code.
+If you just want a quick demo of your animated thing to post on Twitter, screen recording probably makes more sense and you should ignore all of this. But these techniques can be pretty useful in other situations.
+
+If you want to automatically produce a bunch of animated gifs or videos on a server and your animation is pretty simple, "Node + canvas" is a good option. If your animation is complicated and needs browser stuff, but you still want an automated generator, "Web workers + PhantomJS" could suit you well.
+
+If you want to produce on-demand gifs without any server-side code, the web workers techniques listed above all work pretty well.  They're not instantaneous and they're a bit clunky but on the other hand you can let users generate totally custom gifs and do all the work in their browsers.
 
 Another nice thing about these techniques is that they can all be put towards videos, not just gifs.  Any mechanism that generates a stack of images, one frame at a time, can be put through `ffmpeg` or something similar to create a video instead, so you could potentially create nice data-driven animations in videos without mastering After Effects or whatever.
 
