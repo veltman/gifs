@@ -297,7 +297,7 @@ One slight variation on the above is using the technique from one of the web wor
 1. PhantomJS requests `gifmaker.html`.
 2. `gifmaker.html` creates a gif with web workers. When it's done, it encodes the result as a Base64 string and saves it as  a global variable.
 3. Meanwhile, PhantomJS is checking periodically to see whether the gif is done.  When it's done, it gets the content of that global variable.
-4. Decode the Base64 string into the `.gif`.
+4. Decode the Base64 string and pipe the results into a `.gif` file.
 
 #### Pros
 
