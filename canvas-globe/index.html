@@ -58,7 +58,7 @@ var path = d3.geo.path()
 var colors = d3.scale.ordinal()
     .range(["#6eb8ac", "#c3d34e", "#cd8b4e", "#b9af5e", "#c96e98", "#ac92be", "#8fcd5e"]);
 
-d3.json("/mbostock/raw/4090846/world-110m.json",function(err,world){
+d3.json("world-110m.json",function(err,world){
 
   var land = topojson.feature(world,world.objects.land),
       neighbors = topojson.neighbors(world.objects.countries.geometries),
