@@ -24,8 +24,8 @@
 <script>
 
 var margin = {top: 100, right: 100, bottom: 100, left: 100},
-    width = 960 - margin.left - margin.right,
-    height = 440 - margin.top - margin.bottom;
+    width = 700 - margin.left - margin.right,
+    height = 300 - margin.top - margin.bottom;
 
 var x = d3.scale.ordinal()
     .domain(d3.range(5))
@@ -49,7 +49,7 @@ var dots = svg.selectAll("circle")
   .data(x.domain())
   .enter()
   .append("circle")
-    .attr("r",20)
+    .attr("r",12)
     .attr("cx",0)
     .attr("cy",y)
     .style("fill",color);
@@ -62,7 +62,7 @@ dots.transition()
   })
   .attr("cx",x)
   .transition()
-    .attr("r",40)
+    .attr("r",32)
     .filter(function(d){
       return d % 2;
     })
