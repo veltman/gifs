@@ -390,8 +390,6 @@ This still does not solve the "teardown" problem, where animations clean themsel
 
 Note: although this is intriguing, it feels like malpractice to recommend it. Overwriting global time functions is probably not a good idea. Be careful.
 
-```
-
 ### Automate QuickTime screen recording
 
 Same as the "Quicktime + FFmpeg" or "Quicktime + Photoshop" approaches, but automate the actual screen recording.  Automatically get the screen x, y, width, and height of the `<body>` element in an open browser and capture a screen recording of it. You'd still need a way to specify the duration and start it at the right time. This could probably be done with AppleScript but I wouldn't wish that task on my worst enemy.
