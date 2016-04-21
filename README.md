@@ -376,6 +376,22 @@ TODO: write some sort of `d3-animator` module that has the same API as `d3.trans
 * Still doesn't work with things like d3 axes, which have specific behavior around transitions
 * Seems like an even more convoluted hack!
 
+### Stopping time
+
+Demo: http://bl.ocks.org/veltman/5de325668417b1d504dc
+
+One idea that is somehow both beautiful and grotesque is to manually control an otherwise uncontrollable animation by messing with time itself.  This approach has the benefit of working with any sort of declarative animation library, and not requiring a ton of code.  It has the downside of being crazy and breaking almost everything.
+
+D3, jQuery et al. rely on representations of the current time to "tick" the animation forward by running a render loop.  They get the current time when the animation starts, with something like `Date.now()` or the timestamp supplied by `requestAnimationFrame`.  That becomes `t=0` and then the library repeatedly asks what time it is and updates the animation accordingly, until it reaches the end.
+
+You can short-circuit this process by _lying_ to the browser (or Node) about what time it is with an overwrite of `Date.now` and `requestAnimationFrame`. When you declare an animation, call the current time `t=0`.  Then, whenever D3 asks what time it is, just lie and say it's `t + __` milliseconds, where the blank is how many milliseconds into the animation you want to be.  In this way you can step through an animation at any speed you want (and save frames along the way).
+
+This still does not solve the "teardown" problem, where animations clean themselves up behind the scenes after they pass key times, so if your animation is complicated you can probably only advance it in one direction, but that's probably fine for something like rendering a gif.
+
+Note: although this is intriguing, it feels like malpractice to recommend it. Overwriting global time functions is probably not a good idea. Be careful.
+
+```
+
 ### Automate QuickTime screen recording
 
 Same as the "Quicktime + FFmpeg" or "Quicktime + Photoshop" approaches, but automate the actual screen recording.  Automatically get the screen x, y, width, and height of the `<body>` element in an open browser and capture a screen recording of it. You'd still need a way to specify the duration and start it at the right time. This could probably be done with AppleScript but I wouldn't wish that task on my worst enemy.
