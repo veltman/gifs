@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+  body {
+    font: 24px sans-serif;
+    text-align: center;
+  }
+
+  div.menu {
+    margin: 12px 0;
+  }
+
+  body > div.half {
+    display: inline-block;
+    width: 400px;
+    vertical-align: top;
+  }
+
+  strong {
+    display: block;
+  }
+
+  select {
+    -webkit-appearance: menulist-button;
+    font-size: 24px;
+  }
+
+</style>
+<style id="chart-style">
+
+  rect {
+    stroke: none;
+    fill: #fff;
+  }
+
+  line,
+  path {
+    fill: none;
+    stroke: #444;
+    stroke-width: 1px;
+  }
+
+  text {
+    fill: black;
+    font: 12px sans-serif;
+  }
+
+  text.label {
+    text-anchor: start;
+  }
+
+  .country {
+    font-size: 18px;
+    text-anchor: middle;
+  }
+
+  .year {
+    font-weight: 600;
+    fill: #999;
+    font-size: 36px;
+    text-anchor: end;
+    display: none;
+  }
+
+  .first .year {
+    display: block;
+  }
+
+  .bar {
+    fill: #0eb8ba;
+  }
+
+  .first .bar {
+    fill: #de1e3d;
+  }
+
+</style>
+<body>
+  <div class="menu">Compare <select></select> to <select></select></div>
+  <div class="half">
+    <strong>SVG</strong>
+    <div class="svg"></div>
+  </div>
+  <div class="half">
+    <strong>GIF</strong>
+    <div class="gif"></div>
+  </div>
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.10/d3.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.min.js"></script>
+<script src="gif.js"></script>
+<script>
+
+var margin = {top: 10, right: 10, bottom: 36, left: 10},
+    outerWidth = 400,
+    outerHeight = 200,
+    width = outerWidth - margin.left - margin.right,
+    height = outerHeight - margin.top - margin.bottom,
+    delay = 250,
+    selected = ["Japan","Nigeria"];
+
+// Standard scales and axes
+var x = d3.scale.ordinal()
+    .domain(d3.range(16))
+    .rangeBands([0, width],0.1);
+
+var y = d3.scale.linear()
+    .range([height,0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .tickSize(0)
+    .tickValues(d3.range(0,17,3))
+    .tickFormat(ageFormat)
+    .orient("bottom");
+
+// SVG
+var outer = d3.select(".svg").append("svg")
+    .attr("width",outerWidth);
+
+// Append stylesheet
+outer.append(function(){ return document.getElementById("chart-style"); });
+
+// Explicit background color, won't inherit page background
+outer.append("rect")
+    .attr("class","background")
+    .attr("width",outerWidth);
+
+d3.csv("population-groups.csv", function(error, csv) {
+
+  // Make string fields numeric
+  csv.forEach(function(d){
+    d.year = +d.year;
+    d.pct = +d.pct;
+  });
+
+  // Set domain to highest pct of any group
+  y.domain([0,d3.max(csv,get("pct"))]);
+
+  // Get a map/hash by country
+  // key is country name, value is array of years
+  var byCountry = mapByCountry(csv);
+
+  // Populate dropdowns
+  var menu = d3.selectAll("select")
+      .data(selected);
+
+  var options = menu.selectAll("option")
+      .data(byCountry.keys())
+      .enter()
+      .append("option")
+        .text(get());
+
+  menu.each(function(country){
+    d3.select(this).selectAll("option")
+      .property("selected",function(d){
+        return d === country;
+      });
+  });
+
+  changed();
+  menu.on("change",changed);
+
+  function changed(){
+
+    selected = [];
+
+    menu.each(function(){
+      selected.push(this.options[this.selectedIndex].value);
+    });
+
+    // Remove dupes
+    selected = d3.set(selected).values();
+
+    drawChart(selected);
+
+  }
+
+  function drawChart(countries) {
+
+    var data = countries.map(function(d){
+      return byCountry.get(d);
+    });
+
+    d3.selectAll(".background,svg").attr("height",outerHeight * data.length);
+
+    // Hide so there's not a weird flash when the frames repaint
+    d3.select(".svg").style("display","none");
+
+    var numFrames = data[0].values.length;
+
+    // Append each chart within one big SVG
+    var charts = outer.selectAll(".chart")
+          .data(data);
+
+    var newCharts = charts.enter()
+        .append("g")
+          .attr("class","chart");
+
+    // Add x axes
+    newCharts.append("g")
+        .attr("class","axis")
+        .attr("transform","translate(0 " + height + ")")
+        .call(xAxis)
+        .append("text")
+          .attr("class","label")
+          .attr("dy","2.25em")
+          .text("Percentage of population by age group");
+
+    // Add year/country labels
+    newCharts.append("text")
+          .attr("class","country")
+          .attr("dy","0.75em")
+          .attr("x",width / 2);
+
+    newCharts.append("text")
+        .attr("class","year")
+        .attr("dy","0.75em")
+        .attr("x",width);
+
+    charts.attr("transform",function(d,i){
+          return "translate(" + margin.left + " " + (margin.top + outerHeight * i) + ")";
+        })
+        .select(".country")
+          .text(get("key"));
+
+    charts.classed("first",function(d,i){
+      return !i;
+    });
+
+    var gif = new GIF({
+      workers: 3,
+      quality: 2,
+      repeat: 0
+    });
+
+    gif.on("progress",function(p){
+
+      // Quit if countries changed
+      if (!equal(selected,countries)) {
+        return;
+      }
+
+      d3.select(".svg").style("display","block");
+
+      // Draw frame that matches rendering progress
+      drawFrame(Math.min(numFrames - 1,Math.round(p * numFrames)));
+
+      d3.select(".gif").text(d3.format("%")(p) + " rendered");
+
+    });
+
+    gif.on("finished",function(blob){
+
+      // Quit if they changed countries
+      if (!equal(selected,countries)) {
+        return;
+      }
+
+      d3.select(".svg").style("display","block");
+
+      d3.select(".gif")
+          .text("")
+          .append("img")
+            .attr("src",URL.createObjectURL(blob));
+
+      var i = 0;
+
+      // Loop the SVG
+      function tick(){
+
+        // Quit if countries changed
+        if (equal(selected,countries)) {
+          drawFrame(i++ % numFrames);
+          setTimeout(tick,delay);
+        }
+
+      }
+
+      tick();
+
+    });
+
+    var q = queue(1);
+
+     // Queue up frames to add to gif stack
+    d3.range(numFrames).forEach(function(i){
+      q.defer(addFrame,i);
+    });
+
+    // Once all frames are added
+    q.awaitAll(function(err){
+
+      // Quit if countries changed
+      if (!err && equal(selected,countries)) {
+
+        // Start web workers
+        gif.render();
+
+      }
+
+    });
+
+    // Add a frame for a given set of data
+    function addFrame(i,cb) {
+
+      // Quit if countries changed
+      if (!equal(selected,countries)) {
+        return cb(true);
+      }
+
+      drawFrame(i);
+
+      // Create a blob URL from SVG
+      // including "charset=utf-8" in the blob type breaks in Safari
+      var img = new Image(),
+          serialized = new XMLSerializer().serializeToString(outer.node()),
+          svg = new Blob([serialized], {type: "image/svg+xml"}),
+          url = URL.createObjectURL(svg);
+
+      // Onload, callback to move on to next frame
+      img.onload = function(){
+
+        // Quit if countries changed
+        if (!equal(selected,countries)) {
+          return cb(true);
+        }
+
+        gif.addFrame(img, {
+          delay: delay,
+          copy: true
+        });
+
+        return cb(null);
+
+      };
+
+      img.src = url;
+
+    }
+
+    // Update the chart to frame idx
+    function drawFrame(idx) {
+
+      charts.select(".year")
+          .text(function(d){
+            return d.values[idx].key;
+          })
+
+      var bars = charts.selectAll(".bar")
+          .data(function(d,i){
+              return d.values[idx].values;
+          });
+
+      bars.enter().append("rect")
+          .attr("class","bar")
+          .attr("x",function(d,i){
+            return x(i);
+          })
+          .attr("width",x.rangeBand());
+
+      bars.attr("y",get("pct",y))
+          .attr("height",function(d){
+            return height - y(d.pct);
+          });
+
+    }
+
+  }
+
+});
+
+// Turn big list of age group+year+country into a map by country
+function mapByCountry(rows) {
+
+  // Rows are presorted
+  var nested = d3.nest()
+      .key(get("country"))
+      .key(get("year"))
+      .entries(rows);
+
+  return d3.map(nested,get("key"));
+
+}
+
+// Lazy equality test
+function equal(a,b) {
+  return a.length === b.length && a.every(function(d,i){ return d === b[i]; });
+}
+
+function ageFormat(d) {
+
+    var age = d * 5;
+
+    if (age === 75) {
+      return age + "+";
+    }
+
+    return age + "-" + (age + 4);
+
+}
+
+function get(p, f) {
+
+  if (f) {
+
+    return function(d) {
+      return f(d[p]);
+    };
+
+  }
+
+  if (p) {
+    return function(d) {
+      return d[p];
+    };
+  }
+
+  return function(d){
+    return d;
+  };
+
+}
+
+</script>
